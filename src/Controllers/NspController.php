@@ -149,6 +149,22 @@ final class NspController
             'defaults' => ['display_order' => 0, 'is_active' => 1],
             'order_by' => 'display_order ASC, id DESC',
         ],
+        'image_gallery' => [
+            'table' => 'image_gallery',
+            'label' => 'Image gallery item',
+            'required' => ['title', 'image_path'],
+            'allowed' => ['title', 'image_path', 'display_order', 'is_active'],
+            'defaults' => ['display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
+        'video_gallery' => [
+            'table' => 'video_gallery',
+            'label' => 'Video gallery item',
+            'required' => ['title', 'video_path'],
+            'allowed' => ['title', 'video_path', 'display_order', 'is_active'],
+            'defaults' => ['display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
     ];
 
     public function __construct(private readonly NspRepository $repository)
