@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS banners (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     image_path VARCHAR(255) NOT NULL,
     title VARCHAR(200),
-    alt_text VARCHAR(200),
+    sub_title VARCHAR(200),
+    alt_text VARCHAR(200) NULL,
     is_active TINYINT(1) DEFAULT 1,
     display_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -206,5 +207,55 @@ CREATE TABLE IF NOT EXISTS video_gallery (
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS programme_master (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    programme_name VARCHAR(200) NOT NULL,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    programme_master_fk INT UNSIGNED NOT NULL,
+    project_name VARCHAR(200) NOT NULL,
+    project_details TEXT,
+    achievement_details TEXT,
+    image_path VARCHAR(255),
+    other_image_paths TEXT,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_projects_programme_master
+        FOREIGN KEY (programme_master_fk) REFERENCES programme_master(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS programme_overview (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    programme_master_fk INT UNSIGNED NOT NULL,
+    projects_fk INT UNSIGNED NOT NULL,
+    starting_year YEAR,
+    supported_by VARCHAR(255),
+    status VARCHAR(100),
+    strength VARCHAR(100),
+    beneficiaries_covered INT DEFAULT 0,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_programme_overview_programme_master
+        FOREIGN KEY (programme_master_fk) REFERENCES programme_master(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_programme_overview_projects
+        FOREIGN KEY (projects_fk) REFERENCES projects(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
 );
 

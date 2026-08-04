@@ -25,7 +25,7 @@ final class NspController
             'table' => 'banners',
             'label' => 'Banner',
             'required' => ['image_path'],
-            'allowed' => ['image_path', 'title', 'alt_text', 'is_active', 'display_order'],
+            'allowed' => ['image_path', 'title', 'sub_title', 'alt_text', 'is_active', 'display_order'],
             'defaults' => ['is_active' => 1, 'display_order' => 0],
             'order_by' => 'display_order ASC, id DESC',
         ],
@@ -165,6 +165,30 @@ final class NspController
             'defaults' => ['display_order' => 0, 'is_active' => 1],
             'order_by' => 'display_order ASC, id DESC',
         ],
+        'programme_master' => [
+            'table' => 'programme_master',
+            'label' => 'Programme',
+            'required' => ['programme_name'],
+            'allowed' => ['programme_name', 'display_order', 'is_active'],
+            'defaults' => ['display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
+        'projects' => [
+            'table' => 'projects',
+            'label' => 'Project',
+            'required' => ['programme_master_fk', 'project_name'],
+            'allowed' => ['programme_master_fk', 'project_name', 'project_details', 'achievement_details', 'image_path', 'other_image_paths', 'display_order', 'is_active'],
+            'defaults' => ['display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
+        'programme_overview' => [
+            'table' => 'programme_overview',
+            'label' => 'Programme overview',
+            'required' => ['programme_master_fk', 'projects_fk'],
+            'allowed' => ['programme_master_fk', 'projects_fk', 'starting_year', 'supported_by', 'status', 'strength', 'beneficiaries_covered', 'display_order', 'is_active'],
+            'defaults' => ['beneficiaries_covered' => 0, 'display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
     ];
 
     public function __construct(private readonly NspRepository $repository)
@@ -262,7 +286,11 @@ final class NspController
     public function index(string $resource): void
     {
         $config = $this->resources[$resource];
-        $records = $this->repository->all($config['table'], $config['order_by']);
+        $records = match ($resource) {
+            'programme_overview' => $this->repository->allProgrammeOverview($config['order_by']),
+            'projects' => $this->repository->allProjects($config['order_by']),
+            default => $this->repository->all($config['table'], $config['order_by']),
+        };
 
         Response::json([
             'success' => true,
@@ -273,7 +301,11 @@ final class NspController
     public function show(string $resource, int $id): void
     {
         $config = $this->resources[$resource];
-        $record = $this->repository->find($config['table'], $id);
+        $record = match ($resource) {
+            'programme_overview' => $this->repository->findProgrammeOverview($id),
+            'projects' => $this->repository->findProject($id),
+            default => $this->repository->find($config['table'], $id),
+        };
 
         if ($record === null) {
             Response::json([
@@ -577,6 +609,59 @@ final class NspController
                     'success' => false,
                     'message' => 'scholarship_status must be one of: pending, approved, rejected.',
                 ];
+            }
+        }
+
+        if ($resource === 'projects' && array_key_exists('programme_master_fk', $payload)) {
+            $programmeMasterFk = filter_var($payload['programme_master_fk'], FILTER_VALIDATE_INT);
+            if ($programmeMasterFk === false || $programmeMasterFk <= 0) {
+                return [
+                    'success' => false,
+                    'message' => 'programme_master_fk must be a positive integer.',
+                ];
+            }
+
+            if (!$this->repository->existsById('programme_master', $programmeMasterFk)) {
+                return [
+                    'success' => false,
+                    'message' => 'programme_master_fk does not reference an existing programme.',
+                ];
+            }
+        }
+
+        if ($resource === 'programme_overview') {
+            if (array_key_exists('programme_master_fk', $payload)) {
+                $programmeMasterFk = filter_var($payload['programme_master_fk'], FILTER_VALIDATE_INT);
+                if ($programmeMasterFk === false || $programmeMasterFk <= 0) {
+                    return [
+                        'success' => false,
+                        'message' => 'programme_master_fk must be a positive integer.',
+                    ];
+                }
+
+                if (!$this->repository->existsById('programme_master', $programmeMasterFk)) {
+                    return [
+                        'success' => false,
+                        'message' => 'programme_master_fk does not reference an existing programme.',
+                    ];
+                }
+            }
+
+            if (array_key_exists('projects_fk', $payload)) {
+                $projectFk = filter_var($payload['projects_fk'], FILTER_VALIDATE_INT);
+                if ($projectFk === false || $projectFk <= 0) {
+                    return [
+                        'success' => false,
+                        'message' => 'projects_fk must be a positive integer.',
+                    ];
+                }
+
+                if (!$this->repository->existsById('projects', $projectFk)) {
+                    return [
+                        'success' => false,
+                        'message' => 'projects_fk does not reference an existing project.',
+                    ];
+                }
             }
         }
 
