@@ -212,6 +212,8 @@ CREATE TABLE IF NOT EXISTS video_gallery (
 CREATE TABLE IF NOT EXISTS programme_master (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     programme_name VARCHAR(200) NOT NULL,
+    programme_name_hindi VARCHAR(200),
+    programme_name_odia VARCHAR(200),
     display_order INT DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -222,8 +224,14 @@ CREATE TABLE IF NOT EXISTS projects (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     programme_master_fk INT UNSIGNED NOT NULL,
     project_name VARCHAR(200) NOT NULL,
+    project_name_hindi VARCHAR(200),
+    project_name_odia VARCHAR(200),
     project_details TEXT,
+    project_details_hindi TEXT,
+    project_details_odia TEXT,
     achievement_details TEXT,
+    achievement_details_hindi TEXT,
+    achievement_details_odia TEXT,
     image_path VARCHAR(255),
     other_image_paths TEXT,
     display_order INT DEFAULT 0,
@@ -257,5 +265,87 @@ CREATE TABLE IF NOT EXISTS programme_overview (
         FOREIGN KEY (projects_fk) REFERENCES projects(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS opportunities (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name_of_post VARCHAR(200) NOT NULL,
+    req_qualification TEXT NOT NULL,
+    number_of_post INT NOT NULL DEFAULT 0,
+    remuneration VARCHAR(150) NOT NULL,
+    lower_age INT,
+    upper_age INT,
+    closing_date DATE,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cctv_details (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    project_name VARCHAR(200) NOT NULL,
+    project_name_hindi VARCHAR(200),
+    project_name_odia VARCHAR(200),
+    serial_number VARCHAR(100) NOT NULL,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS organization_details (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    phone_number VARCHAR(20) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    office_address TEXT NOT NULL,
+    office_address_hindi TEXT,
+    office_address_odia TEXT,
+    facebook_url VARCHAR(255) NULL,
+    twitter_url VARCHAR(255) NULL,
+    linkedin_url VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS donations (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    donor_name VARCHAR(200) NOT NULL,
+    donation_amount DECIMAL(12,2) NOT NULL,
+    donation_date DATE NOT NULL,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS governing_bodies (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    name_hindi VARCHAR(200),
+    name_odia VARCHAR(200),
+    position VARCHAR(200) NOT NULL,
+    qualification VARCHAR(255) NOT NULL,
+    image_path VARCHAR(255),
+    message TEXT,
+    message_hindi TEXT,
+    message_odia TEXT,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS general_bodies (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    name_hindi VARCHAR(200),
+    name_odia VARCHAR(200),
+    position VARCHAR(200) NOT NULL,
+    image_path VARCHAR(255),
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
