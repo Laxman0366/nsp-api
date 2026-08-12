@@ -118,6 +118,11 @@ if ($method === 'POST' && $uri === '/api/upload') {
     exit;
 }
 
+if ($method === 'POST' && $uri === '/api/send-mail') {
+    $controller->sendMail($payload);
+    exit;
+}
+
 if (preg_match('#^/api/(?:nsp/)?([a-z_]+)(?:/(\d+))?$#', $uri, $matches) === 1) {
     $resource = $matches[1];
     $id = isset($matches[2]) ? (int) $matches[2] : null;

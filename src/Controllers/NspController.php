@@ -9,6 +9,8 @@ use App\Repositories\NspRepository;
 
 final class NspController
 {
+    private const CONTACT_EMAIL_TO = 'paikaraylaxman@gmail.com';
+
     /**
      * @var array<string, array{table: string, label: string, required: array<int, string>, allowed: array<int, string>, defaults: array<string, mixed>, order_by: string}>
      */
@@ -49,7 +51,7 @@ final class NspController
             'table' => 'advertisements',
             'label' => 'Advertisement',
             'required' => ['title', 'opening_date'],
-            'allowed' => ['title', 'description', 'opening_date', 'closing_date', 'posted_by', 'detail_file_path', 'display_order'],
+            'allowed' => ['title', 'title_hindi', 'title_odia', 'description', 'description_hindi', 'description_odia', 'opening_date', 'closing_date', 'posted_by', 'detail_file_path', 'display_order'],
             'defaults' => ['display_order' => 0],
             'order_by' => 'display_order ASC, id DESC',
         ],
@@ -57,7 +59,7 @@ final class NspController
             'table' => 'tender_notices',
             'label' => 'Tender notice',
             'required' => ['title', 'opening_date'],
-            'allowed' => ['title', 'description', 'opening_date', 'closing_date', 'posted_by', 'detail_file_path', 'display_order'],
+            'allowed' => ['title', 'title_hindi', 'title_odia', 'description', 'description_hindi', 'description_odia', 'opening_date', 'closing_date', 'posted_by', 'detail_file_path', 'display_order'],
             'defaults' => ['display_order' => 0, 'posted_by' => 'Nilachal Seva Pratisthan'],
             'order_by' => 'display_order ASC, id DESC',
         ],
@@ -65,7 +67,7 @@ final class NspController
             'table' => 'news_events',
             'label' => 'News event',
             'required' => ['title'],
-            'allowed' => ['title', 'description', 'posted_by', 'detail_file_path', 'display_order'],
+            'allowed' => ['title', 'title_hindi', 'title_odia', 'description', 'description_hindi', 'description_odia', 'posted_by', 'detail_file_path', 'display_order'],
             'defaults' => ['display_order' => 0],
             'order_by' => 'display_order ASC, id DESC',
         ],
@@ -89,7 +91,7 @@ final class NspController
             'table' => 'success_stories',
             'label' => 'Success story',
             'required' => ['title', 'beneficiary_name'],
-            'allowed' => ['title', 'beneficiary_name', 'details', 'image_path', 'display_order', 'is_active'],
+            'allowed' => ['title', 'title_hindi', 'title_odia', 'beneficiary_name', 'beneficiary_name_hindi', 'beneficiary_name_odia', 'details', 'details_hindi', 'details_odia', 'description', 'description_hindi', 'description_odia', 'image_path', 'display_order', 'is_active'],
             'defaults' => ['display_order' => 0, 'is_active' => 1],
             'order_by' => 'display_order ASC, id DESC',
         ],
@@ -266,6 +268,11 @@ final class NspController
                 'path' => '/api/upload',
                 'description' => 'Upload a file and receive its stored path',
             ],
+            [
+                'method' => 'POST',
+                'path' => '/api/send-mail',
+                'description' => 'Send submitted form data to configured mail inbox',
+            ],
         ];
 
         $resourceRoutes = [];
@@ -340,6 +347,8 @@ final class NspController
             default => $this->repository->all($config['table'], $config['order_by']),
         };
 
+        $records = array_map(fn (array $record): array => $this->transformRecordForResponse($resource, $record), $records);
+
         Response::json([
             'success' => true,
             'data' => $records,
@@ -362,6 +371,8 @@ final class NspController
             ], 404);
             return;
         }
+
+        $record = $this->transformRecordForResponse($resource, $record);
 
         Response::json([
             'success' => true,
@@ -421,6 +432,87 @@ final class NspController
         ], 201);
     }
 
+    public function sendMail(array $payload): void
+    {
+        if ($payload === []) {
+            Response::json([
+                'success' => false,
+                'message' => 'Request payload is required.',
+            ], 422);
+            return;
+        }
+
+        $name = trim((string) ($payload['name'] ?? $payload['full_name'] ?? ''));
+        $email = trim((string) ($payload['email'] ?? ''));
+        $subjectInput = trim((string) ($payload['subject'] ?? 'NSP Website Contact'));
+        $messageInput = trim((string) ($payload['message'] ?? $payload['description'] ?? ''));
+
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Response::json([
+                'success' => false,
+                'message' => 'Field "email" must be a valid email address.',
+            ], 422);
+            return;
+        }
+
+        if ($messageInput === '' && count($payload) === 0) {
+            Response::json([
+                'success' => false,
+                'message' => 'Please provide at least one field to send.',
+            ], 422);
+            return;
+        }
+
+        $safeSubject = preg_replace('/[\r\n]+/', ' ', $subjectInput) ?: 'NSP Website Contact';
+
+        $lines = [
+            'A new form submission was received.',
+            '',
+            'Name: ' . ($name !== '' ? $name : 'N/A'),
+            'Email: ' . ($email !== '' ? $email : 'N/A'),
+            'Message: ' . ($messageInput !== '' ? $messageInput : 'N/A'),
+            '',
+            'All fields received:',
+        ];
+
+        foreach ($payload as $key => $value) {
+            $label = preg_replace('/[^a-z0-9_\- ]/i', '', (string) $key) ?: 'field';
+            if (is_array($value)) {
+                $encoded = json_encode($value);
+                $value = $encoded === false ? '[array]' : $encoded;
+            }
+
+            $sanitizedValue = preg_replace('/[\r\n]+/', ' ', trim((string) $value));
+            $lines[] = sprintf('- %s: %s', $label, $sanitizedValue !== '' ? $sanitizedValue : '');
+        }
+
+        $body = implode("\r\n", $lines);
+
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=UTF-8',
+            'From: no-reply@nsp.local',
+            'Reply-To: ' . ($email !== '' ? $email : 'no-reply@nsp.local'),
+            'X-Mailer: PHP/' . phpversion(),
+        ];
+
+        $sent = @mail(self::CONTACT_EMAIL_TO, $safeSubject, $body, implode("\r\n", $headers));
+
+        if (!$sent) {
+            Response::json([
+                'success' => false,
+                'message' => 'Unable to send email right now. Please check mail server configuration.',
+            ], 500);
+            return;
+        }
+
+        Response::json([
+            'success' => true,
+            'message' => 'Mail sent successfully.',
+            'sent_to' => self::CONTACT_EMAIL_TO,
+        ], 201);
+    }
+
     public function store(string $resource, array $payload): void
     {
         $config = $this->resources[$resource];
@@ -434,6 +526,9 @@ final class NspController
 
         $id = $this->repository->create($config['table'], $data);
         $created = $this->repository->find($config['table'], $id);
+        if ($created !== null) {
+            $created = $this->transformRecordForResponse($resource, $created);
+        }
 
         Response::json([
             'success' => true,
@@ -463,13 +558,18 @@ final class NspController
 
         $updated = $this->repository->update($config['table'], $id, $data);
 
+        $record = $this->repository->find($config['table'], $id);
+        if ($record !== null) {
+            $record = $this->transformRecordForResponse($resource, $record);
+        }
+
         Response::json([
             'success' => true,
             'message' => $updated
                 ? $config['label'] . ' updated successfully.'
                 : $config['label'] . ' is already up to date.',
             'updated' => $updated,
-            'data' => $this->repository->find($config['table'], $id),
+            'data' => $record,
         ]);
     }
 
@@ -538,7 +638,34 @@ final class NspController
             }
         }
 
+        if ($resource === 'success_stories') {
+            if (!array_key_exists('details', $normalized) && array_key_exists('description', $normalized)) {
+                $normalized['details'] = $normalized['description'];
+            }
+
+            if (!array_key_exists('details_hindi', $normalized) && array_key_exists('description_hindi', $normalized)) {
+                $normalized['details_hindi'] = $normalized['description_hindi'];
+            }
+
+            if (!array_key_exists('details_odia', $normalized) && array_key_exists('description_odia', $normalized)) {
+                $normalized['details_odia'] = $normalized['description_odia'];
+            }
+
+            unset($normalized['description'], $normalized['description_hindi'], $normalized['description_odia']);
+        }
+
         return $normalized;
+    }
+
+    private function transformRecordForResponse(string $resource, array $record): array
+    {
+        if ($resource === 'success_stories') {
+            $record['description'] = $record['details'] ?? null;
+            $record['description_hindi'] = $record['details_hindi'] ?? null;
+            $record['description_odia'] = $record['details_odia'] ?? null;
+        }
+
+        return $record;
     }
 
     private function handleFileUploadForCreate(string $resource, array &$payload, array $files): ?string

@@ -42,6 +42,7 @@ These defaults match standard XAMPP local MySQL setup.
 
 - `GET /api/health`
 - `GET /api/urls` - list all available API URLs
+- `POST /api/send-mail` - receive form data and send it to configured email inbox
 
 Example:
 
@@ -50,6 +51,34 @@ Example:
 API URL listing example:
 
 `http://localhost/nsp-api/public/api/urls`
+
+### Send Mail API
+
+Endpoint:
+
+- `POST /api/send-mail`
+
+Configured receiver:
+
+- `paikaraylaxman@gmail.com`
+
+Accepted body formats:
+
+- `application/json`
+- `application/x-www-form-urlencoded`
+- `multipart/form-data`
+
+Sample JSON payload:
+
+```json
+{
+   "name": "Aman Kumar",
+   "email": "aman@example.com",
+   "subject": "Need scholarship help",
+   "message": "Please share eligibility criteria.",
+   "phone": "9876543210"
+}
+```
 
 ### NSP Applicants CRUD
 
