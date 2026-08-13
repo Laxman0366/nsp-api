@@ -38,6 +38,24 @@ These defaults match standard XAMPP local MySQL setup.
 
 ## API Endpoints
 
+### Access Control
+
+- All `GET` endpoints are public.
+- `POST`, `PUT`, and `DELETE` endpoints require the Bearer token returned by `POST /api/login`.
+- The only account is the singleton administrator: `admin` / `Admin@123`. Change its password hash before production use.
+- `POST /api/login` is public; `POST /api/logout` requires a valid Bearer token.
+
+Login request:
+
+```json
+{
+   "username": "admin",
+   "password": "Admin@123"
+}
+```
+
+For protected requests, send `Authorization: Bearer <token>`.
+
 ### Health
 
 - `GET /api/health`

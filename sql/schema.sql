@@ -165,6 +165,25 @@ CREATE TABLE IF NOT EXISTS annual_reports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS legal_documents (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    document_name VARCHAR(200) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS legal_status (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    status_details TEXT NOT NULL,
+    display_order INT DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS audit_reports (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
@@ -352,6 +371,33 @@ CREATE TABLE IF NOT EXISTS governing_bodies (
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS admin_users (
+    id INT UNSIGNED NOT NULL PRIMARY KEY DEFAULT 1,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_admin_users_singleton CHECK (id = 1)
+);
+
+-- Default admin login: username "admin", password "Admin@123" (change after first login).
+INSERT INTO admin_users (username, password_hash)
+VALUES ('admin', '$2y$10$l78EzV6duvdkGAyjsqZWN.TuErWWdcK6/3znEdPdRJE4MAMkfVLO2')
+ON DUPLICATE KEY UPDATE username = username;
+
+CREATE TABLE IF NOT EXISTS auth_tokens (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    admin_user_fk INT UNSIGNED NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_auth_tokens_admin_user
+        FOREIGN KEY (admin_user_fk) REFERENCES admin_users(id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uq_auth_tokens_token_hash (token_hash)
 );
 
 CREATE TABLE IF NOT EXISTS general_bodies (

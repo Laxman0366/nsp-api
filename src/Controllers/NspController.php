@@ -119,6 +119,22 @@ final class NspController
             'defaults' => ['display_order' => 0, 'is_active' => 1],
             'order_by' => 'display_order ASC, id DESC',
         ],
+        'legal_documents' => [
+            'table' => 'legal_documents',
+            'label' => 'Legal document',
+            'required' => ['document_name', 'file_path'],
+            'allowed' => ['document_name', 'file_path', 'display_order', 'is_active'],
+            'defaults' => ['display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
+        'legal_status' => [
+            'table' => 'legal_status',
+            'label' => 'Legal status',
+            'required' => ['status_details'],
+            'allowed' => ['status_details', 'display_order', 'is_active'],
+            'defaults' => ['display_order' => 0, 'is_active' => 1],
+            'order_by' => 'display_order ASC, id DESC',
+        ],
         'audit_reports' => [
             'table' => 'audit_reports',
             'label' => 'Audit report',
@@ -262,6 +278,16 @@ final class NspController
                 'method' => 'GET',
                 'path' => '/api/urls',
                 'description' => 'List all available API URLs',
+            ],
+            [
+                'method' => 'POST',
+                'path' => '/api/login',
+                'description' => 'Login with username/password, returns Bearer token (required for all write requests)',
+            ],
+            [
+                'method' => 'POST',
+                'path' => '/api/logout',
+                'description' => 'Logout and invalidate the current Bearer token (requires Authorization header)',
             ],
             [
                 'method' => 'POST',

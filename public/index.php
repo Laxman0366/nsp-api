@@ -2,15 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Controllers\AuthController;
 use App\Controllers\NspController;
+use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Response;
 use App\Repositories\NspRepository;
 
 require_once __DIR__ . '/../src/Core/Database.php';
 require_once __DIR__ . '/../src/Core/Response.php';
+require_once __DIR__ . '/../src/Core/Auth.php';
 require_once __DIR__ . '/../src/Repositories/NspRepository.php';
 require_once __DIR__ . '/../src/Controllers/NspController.php';
+require_once __DIR__ . '/../src/Controllers/AuthController.php';
 
 /** Parses text fields from a raw multipart body (PUT/PATCH — PHP skips $_POST for these). */
 function parseMultipartTextFields(string $contentType, string $rawBody): array
@@ -66,6 +70,8 @@ $uri = rtrim($uri ?: '/', '/');
 $uri = $uri === '' ? '/' : $uri;
 
 $controller = new NspController(new NspRepository(Database::connection()));
+$auth = new Auth(Database::connection());
+$authController = new AuthController($auth);
 $rawContentType = (string) ($_SERVER['CONTENT_TYPE'] ?? '');
 $contentType    = strtolower($rawContentType);
 $payload = [];
@@ -110,6 +116,28 @@ if ($method === 'GET' && $uri === '/api/health') {
 
 if ($method === 'GET' && $uri === '/api/urls') {
     $controller->urls();
+    exit;
+}
+
+if ($method === 'POST' && $uri === '/api/login') {
+    $authController->login($payload);
+    exit;
+}
+
+// Only GET requests are allowed without authentication; every write request needs a valid Bearer token.
+if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
+    $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
+    if ($authUser === null) {
+        Response::json([
+            'success' => false,
+            'message' => 'Unauthorized. Please login first.',
+        ], 401);
+        exit;
+    }
+}
+
+if ($method === 'POST' && $uri === '/api/logout') {
+    $authController->logout(Auth::bearerTokenFromHeader());
     exit;
 }
 
