@@ -18,6 +18,16 @@ final class NspRepository
         return $this->db->query($sql)->fetchAll();
     }
 
+    public function allJobApplicationsByOpportunity(int $opportunityId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM job_applications WHERE opportunities_fk = :opportunity_id ORDER BY id DESC'
+        );
+        $stmt->execute(['opportunity_id' => $opportunityId]);
+
+        return $stmt->fetchAll();
+    }
+
     public function find(string $table, int $id): ?array
     {
         $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE id = :id LIMIT 1', $table));
@@ -95,13 +105,13 @@ final class NspRepository
 
     public function openJobs(): array
     {
-        // Applications are matched to opportunities by post name, since there is no FK between them.
-        $sql = 'SELECT o.name_of_post AS position_for,
+        $sql = 'SELECT o.id AS opportunities_id,
+                   o.name_of_post AS position_for,
                        o.closing_date,
                        o.number_of_post AS number_of_vacancies,
                        COUNT(ja.id) AS applied_candidates
                 FROM opportunities o
-                LEFT JOIN job_applications ja ON ja.position_applied = o.name_of_post
+            LEFT JOIN job_applications ja ON ja.opportunities_fk = o.id
                 WHERE o.is_active = 1
                   AND (o.closing_date IS NULL OR o.closing_date >= CURDATE())
                 GROUP BY o.id, o.name_of_post, o.closing_date, o.number_of_post

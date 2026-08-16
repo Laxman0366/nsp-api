@@ -258,9 +258,9 @@ final class NspController
         'job_applications' => [
             'table' => 'job_applications',
             'label' => 'Job application',
-            'required' => ['position_applied', 'applicant_name', 'gender', 'date_of_birth', 'present_address', 'permanent_address'],
+            'required' => ['opportunities_fk', 'position_applied', 'applicant_name', 'gender', 'date_of_birth', 'present_address', 'permanent_address'],
             'allowed' => [
-                'position_applied', 'applicant_name', 'gender', 'date_of_birth', 'email', 'mobile_no', 'marital_status',
+                'opportunities_fk', 'position_applied', 'applicant_name', 'gender', 'date_of_birth', 'email', 'mobile_no', 'marital_status',
                 'father_name', 'mother_name', 'guardian_name',
                 'present_address', 'permanent_address', 'photograph_path', 'signature_path',
                 'secondary_qualification', 'secondary_university', 'secondary_specialisation', 'secondary_passing_year',
@@ -403,10 +403,13 @@ final class NspController
         ]);
     }
 
-    public function index(string $resource): void
+    public function index(string $resource, ?int $opportunityId = null): void
     {
         $config = $this->resources[$resource];
         $records = match ($resource) {
+            'job_applications' => $opportunityId === null
+                ? $this->repository->all($config['table'], $config['order_by'])
+                : $this->repository->allJobApplicationsByOpportunity($opportunityId),
             'programme_overview' => $this->repository->allProgrammeOverview($config['order_by']),
             'projects' => $this->repository->allProjects($config['order_by']),
             default => $this->repository->all($config['table'], $config['order_by']),
@@ -448,6 +451,7 @@ final class NspController
     public function openJobs(): void
     {
         $records = array_map(static fn (array $row): array => [
+            'opportunities_id' => (int) $row['opportunities_id'],
             'position_for' => $row['position_for'],
             'closing_date' => $row['closing_date'],
             'number_of_vacancies' => (int) $row['number_of_vacancies'],

@@ -416,6 +416,7 @@ CREATE TABLE IF NOT EXISTS general_bodies (
 CREATE TABLE IF NOT EXISTS job_applications (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     application_number VARCHAR(20) NOT NULL UNIQUE,
+    opportunities_fk INT UNSIGNED NOT NULL,
     -- Position applicant is applying for
     position_applied VARCHAR(150) NOT NULL,
     -- Step 2: General details
@@ -486,7 +487,11 @@ CREATE TABLE IF NOT EXISTS job_applications (
     reference2_email VARCHAR(150),
     status ENUM('pending', 'reviewed', 'shortlisted', 'rejected') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_job_applications_opportunity
+        FOREIGN KEY (opportunities_fk) REFERENCES opportunities(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS job_application_sequences (

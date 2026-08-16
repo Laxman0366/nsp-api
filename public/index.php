@@ -183,7 +183,19 @@ if (preg_match('#^/api/(?:nsp/)?([a-z_]+)(?:/(\d+))?$#', $uri, $matches) === 1) 
 
     if ($id === null) {
         if ($method === 'GET') {
-            $controller->index($resource);
+            $opportunityId = null;
+            if ($resource === 'job_applications' && array_key_exists('opportunities_fk', $_GET)) {
+                $opportunityId = filter_var($_GET['opportunities_fk'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+                if ($opportunityId === false) {
+                    Response::json([
+                        'success' => false,
+                        'message' => 'Query parameter "opportunities_fk" must be a positive integer.',
+                    ], 422);
+                    exit;
+                }
+            }
+
+            $controller->index($resource, $opportunityId);
             exit;
         }
 
