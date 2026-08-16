@@ -124,8 +124,21 @@ if ($method === 'POST' && $uri === '/api/login') {
     exit;
 }
 
-// Only GET requests are allowed without authentication; every write request needs a valid Bearer token.
-if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
+// Job application submissions and file uploads are public; every other write request needs a valid Bearer token.
+$isPublicPost = $method === 'POST' && in_array($uri, ['/api/job_applications', '/api/job_application_resumes', '/api/upload'], true);
+if (in_array($method, ['POST', 'PUT', 'DELETE'], true) && !$isPublicPost) {
+    $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
+    if ($authUser === null) {
+        Response::json([
+            'success' => false,
+            'message' => 'Unauthorized. Please login first.',
+        ], 401);
+        exit;
+    }
+}
+
+$isJobApplicationCollection = in_array($uri, ['/api/job_applications', '/api/nsp/job_applications'], true);
+if ($method === 'GET' && $isJobApplicationCollection) {
     $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
     if ($authUser === null) {
         Response::json([
@@ -148,6 +161,11 @@ if ($method === 'POST' && $uri === '/api/upload') {
 
 if ($method === 'POST' && $uri === '/api/send-mail') {
     $controller->sendMail($payload);
+    exit;
+}
+
+if ($method === 'GET' && $uri === '/api/open_jobs') {
+    $controller->openJobs();
     exit;
 }
 

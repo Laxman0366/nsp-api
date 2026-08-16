@@ -255,6 +255,40 @@ final class NspController
             'defaults' => ['display_order' => 0, 'is_active' => 1],
             'order_by' => 'display_order ASC, id DESC',
         ],
+        'job_applications' => [
+            'table' => 'job_applications',
+            'label' => 'Job application',
+            'required' => ['position_applied', 'applicant_name', 'gender', 'date_of_birth', 'present_address', 'permanent_address'],
+            'allowed' => [
+                'position_applied', 'applicant_name', 'gender', 'date_of_birth', 'email', 'mobile_no', 'marital_status',
+                'father_name', 'mother_name', 'guardian_name',
+                'present_address', 'permanent_address', 'photograph_path', 'signature_path',
+                'secondary_qualification', 'secondary_university', 'secondary_specialisation', 'secondary_passing_year',
+                'secondary_percentage', 'secondary_passing_category',
+                'higher_secondary_qualification', 'higher_secondary_university', 'higher_secondary_specialisation', 'higher_secondary_passing_year',
+                'higher_secondary_percentage', 'higher_secondary_passing_category',
+                'graduation_qualification', 'graduation_university', 'graduation_specialisation', 'graduation_passing_year',
+                'graduation_percentage', 'graduation_passing_category',
+                'post_graduation_qualification', 'post_graduation_university', 'post_graduation_specialisation', 'post_graduation_passing_year',
+                'post_graduation_percentage', 'post_graduation_passing_category',
+                'other_qualification', 'other_university', 'other_specialisation', 'other_passing_year', 'other_percentage', 'other_passing_category',
+                'employer_organization', 'designation', 'employment_period', 'grade_salary', 'job_description',
+                'computer_skill_name', 'computer_skill_tools_proficiency',
+                'language_english', 'language_odia', 'language_hindi',
+                'reference1_name', 'reference1_phone', 'reference1_email', 'reference2_name', 'reference2_phone', 'reference2_email',
+                'status',
+            ],
+            'defaults' => ['language_english' => 0, 'language_odia' => 0, 'language_hindi' => 0, 'status' => 'pending'],
+            'order_by' => 'id DESC',
+        ],
+        'job_application_resumes' => [
+            'table' => 'job_application_resumes',
+            'label' => 'Job application resume',
+            'required' => ['job_applications_fk'],
+            'allowed' => ['job_applications_fk', 'generated_resume_path'],
+            'defaults' => [],
+            'order_by' => 'id DESC',
+        ],
     ];
 
     public function __construct(private readonly NspRepository $repository)
@@ -278,6 +312,11 @@ final class NspController
                 'method' => 'GET',
                 'path' => '/api/urls',
                 'description' => 'List all available API URLs',
+            ],
+            [
+                'method' => 'GET',
+                'path' => '/api/open_jobs',
+                'description' => 'List open opportunities with vacancy count and applied candidate count',
             ],
             [
                 'method' => 'POST',
@@ -406,6 +445,22 @@ final class NspController
         ]);
     }
 
+    public function openJobs(): void
+    {
+        $records = array_map(static fn (array $row): array => [
+            'position_for' => $row['position_for'],
+            'closing_date' => $row['closing_date'],
+            'number_of_vacancies' => (int) $row['number_of_vacancies'],
+            'applied_candidates' => (int) $row['applied_candidates'],
+        ], $this->repository->openJobs());
+
+        Response::json([
+            'success' => true,
+            'count' => count($records),
+            'data' => $records,
+        ]);
+    }
+
     public function upload(array $payload, array $files): void
     {
         $uploaded = $files['file'] ?? $files['file_path'] ?? null;
@@ -426,9 +481,13 @@ final class NspController
             return;
         }
 
-        $resource = (string) ($payload['resource'] ?? 'uploads');
-        if (!preg_match('/^[a-z_][a-z0-9_]*$/', $resource)) {
-            Response::json(['success' => false, 'message' => 'Invalid resource name.'], 422);
+        $folder = trim((string) ($payload['folder'] ?? ''));
+        if ($folder === '' && array_key_exists('resource', $payload)) {
+            $folder = trim((string) $payload['resource']);
+        }
+
+        if ($folder !== '' && preg_match('#^[a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)*$#', $folder) !== 1) {
+            Response::json(['success' => false, 'message' => 'Invalid folder name.'], 422);
             return;
         }
 
@@ -438,13 +497,18 @@ final class NspController
             $extension = 'bin';
         }
 
-        $targetDirectory = __DIR__ . '/../../public/assets/' . $resource;
+        $assetsDirectory = realpath(__DIR__ . '/../../public/assets');
+        if ($assetsDirectory === false) {
+            $assetsDirectory = __DIR__ . '/../../public/assets';
+        }
+
+        $targetDirectory = $assetsDirectory . ($folder !== '' ? DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $folder) : '');
         if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0775, true) && !is_dir($targetDirectory)) {
             Response::json(['success' => false, 'message' => 'Unable to create asset directory.'], 500);
             return;
         }
 
-        $fileName   = uniqid($resource . '_', true) . '.' . $extension;
+        $fileName   = uniqid('upload_', true) . '.' . $extension;
         $targetPath = $targetDirectory . '/' . $fileName;
 
         if (!move_uploaded_file($tmpPath, $targetPath)) {
@@ -454,7 +518,7 @@ final class NspController
 
         Response::json([
             'success' => true,
-            'path'    => '/assets/' . $resource . '/' . $fileName,
+            'path'    => '/assets' . ($folder !== '' ? '/' . str_replace(DIRECTORY_SEPARATOR, '/', $folder) : '') . '/' . $fileName,
         ], 201);
     }
 
@@ -550,7 +614,9 @@ final class NspController
             return;
         }
 
-        $id = $this->repository->create($config['table'], $data);
+        $id = $resource === 'job_applications'
+            ? $this->repository->createJobApplication($data)
+            : $this->repository->create($config['table'], $data);
         $created = $this->repository->find($config['table'], $id);
         if ($created !== null) {
             $created = $this->transformRecordForResponse($resource, $created);

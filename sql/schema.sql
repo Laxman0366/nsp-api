@@ -413,3 +413,98 @@ CREATE TABLE IF NOT EXISTS general_bodies (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS job_applications (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    application_number VARCHAR(20) NOT NULL UNIQUE,
+    -- Position applicant is applying for
+    position_applied VARCHAR(150) NOT NULL,
+    -- Step 2: General details
+    applicant_name VARCHAR(150) NOT NULL,
+    gender VARCHAR(20) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    email VARCHAR(150),
+    mobile_no VARCHAR(20),
+    marital_status VARCHAR(50),
+    father_name VARCHAR(150),
+    mother_name VARCHAR(150),
+    guardian_name VARCHAR(150),
+    present_address TEXT NOT NULL,
+    permanent_address TEXT NOT NULL,
+    -- Step 3: Photograph and signature (uploaded via /api/upload, path stored here)
+    photograph_path VARCHAR(255),
+    signature_path VARCHAR(255),
+    -- Qualifications
+    secondary_qualification VARCHAR(200),
+    secondary_university VARCHAR(200),
+    secondary_specialisation VARCHAR(200),
+    secondary_passing_year VARCHAR(20),
+    secondary_percentage VARCHAR(20),
+    secondary_passing_category VARCHAR(200),
+    higher_secondary_qualification VARCHAR(200),
+    higher_secondary_university VARCHAR(200),
+    higher_secondary_specialisation VARCHAR(200),
+    higher_secondary_passing_year VARCHAR(20),
+    higher_secondary_percentage VARCHAR(20),
+    higher_secondary_passing_category VARCHAR(200),
+    graduation_qualification VARCHAR(200),
+    graduation_university VARCHAR(200),
+    graduation_specialisation VARCHAR(200),
+    graduation_passing_year VARCHAR(20),
+    graduation_percentage VARCHAR(20),
+    graduation_passing_category VARCHAR(200),
+    post_graduation_qualification VARCHAR(200),
+    post_graduation_university VARCHAR(200),
+    post_graduation_specialisation VARCHAR(200),
+    post_graduation_passing_year VARCHAR(20),
+    post_graduation_percentage VARCHAR(20),
+    post_graduation_passing_category VARCHAR(200),
+    other_qualification VARCHAR(200),
+    other_university VARCHAR(200),
+    other_specialisation VARCHAR(200),
+    other_passing_year VARCHAR(20),
+    other_percentage VARCHAR(20),
+    other_passing_category VARCHAR(200),
+    -- Employment details
+    employer_organization VARCHAR(200),
+    designation VARCHAR(150),
+    employment_period VARCHAR(100),
+    grade_salary VARCHAR(100),
+    job_description TEXT,
+    -- Skills: computer literacy
+    computer_skill_name VARCHAR(150),
+    computer_skill_tools_proficiency TEXT,
+    -- Skills: language proficiency
+    language_english TINYINT(1) DEFAULT 0,
+    language_odia TINYINT(1) DEFAULT 0,
+    language_hindi TINYINT(1) DEFAULT 0,
+    -- References
+    reference1_name VARCHAR(150),
+    reference1_phone VARCHAR(20),
+    reference1_email VARCHAR(150),
+    reference2_name VARCHAR(150),
+    reference2_phone VARCHAR(20),
+    reference2_email VARCHAR(150),
+    status ENUM('pending', 'reviewed', 'shortlisted', 'rejected') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS job_application_sequences (
+    id TINYINT UNSIGNED PRIMARY KEY,
+    next_number INT UNSIGNED NOT NULL DEFAULT 0
+);
+
+INSERT IGNORE INTO job_application_sequences (id, next_number) VALUES (1, 0);
+
+CREATE TABLE IF NOT EXISTS job_application_resumes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    job_applications_fk INT UNSIGNED NOT NULL,
+    generated_resume_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_job_application_resumes_job_application
+        FOREIGN KEY (job_applications_fk) REFERENCES job_applications(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
