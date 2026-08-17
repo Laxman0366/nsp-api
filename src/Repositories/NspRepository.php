@@ -28,6 +28,16 @@ final class NspRepository
         return $stmt->fetchAll();
     }
 
+    public function allJobApplicationResumesByApplication(int $jobApplicationId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM job_application_resumes WHERE job_applications_fk = :job_application_id ORDER BY id DESC'
+        );
+        $stmt->execute(['job_application_id' => $jobApplicationId]);
+
+        return $stmt->fetchAll();
+    }
+
     public function find(string $table, int $id): ?array
     {
         $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE id = :id LIMIT 1', $table));
@@ -113,11 +123,24 @@ final class NspRepository
                 FROM opportunities o
             LEFT JOIN job_applications ja ON ja.opportunities_fk = o.id
                 WHERE o.is_active = 1
-                  AND (o.closing_date IS NULL OR o.closing_date >= CURDATE())
+                  AND (o.closing_date IS NULL OR o.closing_date > CURDATE())
                 GROUP BY o.id, o.name_of_post, o.closing_date, o.number_of_post
                 ORDER BY o.closing_date IS NULL, o.closing_date ASC, o.id DESC';
 
         return $this->db->query($sql)->fetchAll();
+    }
+
+    public function allOpenOpportunities(): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM opportunities
+             WHERE is_active = 1
+               AND (closing_date IS NULL OR closing_date > CURDATE())
+             ORDER BY display_order ASC, id DESC'
+        );
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 
     public function create(string $table, array $payload): int

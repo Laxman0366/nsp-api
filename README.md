@@ -114,6 +114,10 @@ Sample JSON payload:
 - `PUT /api/nsp/applicants/{id}` - update applicant
 - `DELETE /api/nsp/applicants/{id}` - delete applicant
 
+To list resumes for a specific job application, filter the resume collection by its foreign key:
+
+- `GET /api/job_application_resumes?job_applications_fk=20`
+
 Base URL in browser/Postman:
 
 `http://localhost/nsp-api/public`

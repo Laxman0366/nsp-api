@@ -124,8 +124,8 @@ if ($method === 'POST' && $uri === '/api/login') {
     exit;
 }
 
-// Job application submissions and file uploads are public; every other write request needs a valid Bearer token.
-$isPublicPost = $method === 'POST' && in_array($uri, ['/api/job_applications', '/api/job_application_resumes', '/api/upload'], true);
+// Job application submissions, aspirant submissions, and file uploads are public; every other write request needs a valid Bearer token.
+$isPublicPost = $method === 'POST' && in_array($uri, ['/api/job_applications', '/api/job_application_resumes', '/api/job_aspirants', '/api/upload'], true);
 if (in_array($method, ['POST', 'PUT', 'DELETE'], true) && !$isPublicPost) {
     $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
     if ($authUser === null) {
@@ -139,6 +139,17 @@ if (in_array($method, ['POST', 'PUT', 'DELETE'], true) && !$isPublicPost) {
 
 $isJobApplicationCollection = in_array($uri, ['/api/job_applications', '/api/nsp/job_applications'], true);
 if ($method === 'GET' && $isJobApplicationCollection) {
+    $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
+    if ($authUser === null) {
+        Response::json([
+            'success' => false,
+            'message' => 'Unauthorized. Please login first.',
+        ], 401);
+        exit;
+    }
+}
+
+if ($method === 'GET' && in_array($uri, ['/api/job_aspirants', '/api/nsp/job_aspirants'], true)) {
     $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
     if ($authUser === null) {
         Response::json([
@@ -169,6 +180,16 @@ if ($method === 'GET' && $uri === '/api/open_jobs') {
     exit;
 }
 
+if ($method === 'GET' && $uri === '/api/open-opportunities') {
+    $controller->openOpportunities();
+    exit;
+}
+
+if ($method === 'GET' && $uri === '/api/open_opportunities') {
+    $controller->openOpportunities();
+    exit;
+}
+
 if (preg_match('#^/api/(?:nsp/)?([a-z_]+)(?:/(\d+))?$#', $uri, $matches) === 1) {
     $resource = $matches[1];
     $id = isset($matches[2]) ? (int) $matches[2] : null;
@@ -181,9 +202,21 @@ if (preg_match('#^/api/(?:nsp/)?([a-z_]+)(?:/(\d+))?$#', $uri, $matches) === 1) 
         exit;
     }
 
+    if ($method === 'GET' && $resource === 'job_aspirants') {
+        $authUser = $auth->validateToken(Auth::bearerTokenFromHeader());
+        if ($authUser === null) {
+            Response::json([
+                'success' => false,
+                'message' => 'Unauthorized. Please login first.',
+            ], 401);
+            exit;
+        }
+    }
+
     if ($id === null) {
         if ($method === 'GET') {
             $opportunityId = null;
+            $jobApplicationId = null;
             if ($resource === 'job_applications' && array_key_exists('opportunities_fk', $_GET)) {
                 $opportunityId = filter_var($_GET['opportunities_fk'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
                 if ($opportunityId === false) {
@@ -195,7 +228,18 @@ if (preg_match('#^/api/(?:nsp/)?([a-z_]+)(?:/(\d+))?$#', $uri, $matches) === 1) 
                 }
             }
 
-            $controller->index($resource, $opportunityId);
+            if ($resource === 'job_application_resumes' && array_key_exists('job_applications_fk', $_GET)) {
+                $jobApplicationId = filter_var($_GET['job_applications_fk'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+                if ($jobApplicationId === false) {
+                    Response::json([
+                        'success' => false,
+                        'message' => 'Query parameter "job_applications_fk" must be a positive integer.',
+                    ], 422);
+                    exit;
+                }
+            }
+
+            $controller->index($resource, $opportunityId, $jobApplicationId);
             exit;
         }
 

@@ -289,6 +289,14 @@ final class NspController
             'defaults' => [],
             'order_by' => 'id DESC',
         ],
+        'job_aspirants' => [
+            'table' => 'job_aspirants',
+            'label' => 'Job aspirant',
+            'required' => ['name', 'email', 'phone'],
+            'allowed' => ['name', 'email', 'phone', 'description', 'resume_path'],
+            'defaults' => [],
+            'order_by' => 'id DESC',
+        ],
     ];
 
     public function __construct(private readonly NspRepository $repository)
@@ -317,6 +325,16 @@ final class NspController
                 'method' => 'GET',
                 'path' => '/api/open_jobs',
                 'description' => 'List open opportunities with vacancy count and applied candidate count',
+            ],
+            [
+                'method' => 'GET',
+                'path' => '/api/open-opportunities',
+                'description' => 'List active opportunities whose closing date has not passed',
+            ],
+            [
+                'method' => 'GET',
+                'path' => '/api/open_opportunities',
+                'description' => 'List active opportunities whose closing date has not passed (underscore alias)',
             ],
             [
                 'method' => 'POST',
@@ -403,13 +421,16 @@ final class NspController
         ]);
     }
 
-    public function index(string $resource, ?int $opportunityId = null): void
+    public function index(string $resource, ?int $opportunityId = null, ?int $jobApplicationId = null): void
     {
         $config = $this->resources[$resource];
         $records = match ($resource) {
             'job_applications' => $opportunityId === null
                 ? $this->repository->all($config['table'], $config['order_by'])
                 : $this->repository->allJobApplicationsByOpportunity($opportunityId),
+            'job_application_resumes' => $jobApplicationId === null
+                ? $this->repository->all($config['table'], $config['order_by'])
+                : $this->repository->allJobApplicationResumesByApplication($jobApplicationId),
             'programme_overview' => $this->repository->allProgrammeOverview($config['order_by']),
             'projects' => $this->repository->allProjects($config['order_by']),
             default => $this->repository->all($config['table'], $config['order_by']),
@@ -461,6 +482,19 @@ final class NspController
         Response::json([
             'success' => true,
             'count' => count($records),
+            'data' => $records,
+        ]);
+    }
+
+    public function openOpportunities(): void
+    {
+        $records = array_map(
+            fn (array $record): array => $this->transformRecordForResponse('opportunities', $record),
+            $this->repository->allOpenOpportunities()
+        );
+
+        Response::json([
+            'success' => true,
             'data' => $records,
         ]);
     }
