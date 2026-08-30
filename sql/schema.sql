@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS banners (
 
 CREATE TABLE IF NOT EXISTS contact_details (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    mobile VARCHAR(20) NOT NULL,
+    mobile VARCHAR(150) NOT NULL,
     email VARCHAR(150) NOT NULL,
     address TEXT NOT NULL,
     youtube_url VARCHAR(255),
@@ -333,7 +333,7 @@ CREATE TABLE IF NOT EXISTS cctv_details (
 
 CREATE TABLE IF NOT EXISTS organization_details (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    phone_number VARCHAR(20) NOT NULL,
+    phone_number VARCHAR(150) NOT NULL,
     email VARCHAR(150) NOT NULL,
     office_address TEXT NOT NULL,
     office_address_hindi TEXT,
