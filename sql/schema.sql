@@ -283,8 +283,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 CREATE TABLE IF NOT EXISTS programme_overview (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    programme_master_fk INT UNSIGNED NOT NULL,
-    projects_fk INT UNSIGNED NOT NULL,
+    programme_name VARCHAR(200) NOT NULL,
     starting_year YEAR,
     supported_by VARCHAR(255),
     status VARCHAR(100),
@@ -293,15 +292,7 @@ CREATE TABLE IF NOT EXISTS programme_overview (
     display_order INT DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_programme_overview_programme_master
-        FOREIGN KEY (programme_master_fk) REFERENCES programme_master(id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_programme_overview_projects
-        FOREIGN KEY (projects_fk) REFERENCES projects(id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS opportunities (

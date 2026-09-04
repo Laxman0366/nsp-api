@@ -54,4 +54,30 @@ final class AuthController
             'message' => 'Logout successful.',
         ]);
     }
+
+    public function changePassword(int $adminUserId, array $payload): void
+    {
+        $newPassword = (string) ($payload['new_password'] ?? '');
+
+        if ($newPassword === '') {
+            Response::json([
+                'success' => false,
+                'message' => 'New password is required.',
+            ], 422);
+            return;
+        }
+
+        if (!$this->auth->changePassword($adminUserId, $newPassword)) {
+            Response::json([
+                'success' => false,
+                'message' => 'Unable to change password.',
+            ], 500);
+            return;
+        }
+
+        Response::json([
+            'success' => true,
+            'message' => 'Password changed successfully.',
+        ]);
+    }
 }

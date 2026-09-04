@@ -80,6 +80,19 @@ final class Auth
         return $stmt->rowCount() > 0;
     }
 
+    public function changePassword(int $adminUserId, string $newPassword): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE admin_users SET password_hash = :password_hash WHERE id = :id AND is_active = 1'
+        );
+        $stmt->execute([
+            'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+            'id' => $adminUserId,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
     public static function bearerTokenFromHeader(): ?string
     {
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');

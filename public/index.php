@@ -75,6 +75,7 @@ $authController = new AuthController($auth);
 $rawContentType = (string) ($_SERVER['CONTENT_TYPE'] ?? '');
 $contentType    = strtolower($rawContentType);
 $payload = [];
+$authUser = null;
 
 if (($method === 'OPTIONS')) {
     Response::noContent();
@@ -162,6 +163,19 @@ if ($method === 'GET' && in_array($uri, ['/api/job_aspirants', '/api/nsp/job_asp
 
 if ($method === 'POST' && $uri === '/api/logout') {
     $authController->logout(Auth::bearerTokenFromHeader());
+    exit;
+}
+
+if ($method === 'POST' && $uri === '/api/change-password') {
+    if ($authUser === null) {
+        Response::json([
+            'success' => false,
+            'message' => 'Unauthorized. Please login first.',
+        ], 401);
+        exit;
+    }
+
+    $authController->changePassword($authUser['id'], $payload);
     exit;
 }
 

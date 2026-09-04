@@ -202,8 +202,8 @@ final class NspController
         'programme_overview' => [
             'table' => 'programme_overview',
             'label' => 'Programme overview',
-            'required' => ['programme_master_fk', 'projects_fk'],
-            'allowed' => ['programme_master_fk', 'projects_fk', 'starting_year', 'supported_by', 'status', 'strength', 'beneficiaries_covered', 'display_order', 'is_active'],
+            'required' => ['programme_name'],
+            'allowed' => ['programme_name', 'starting_year', 'supported_by', 'status', 'strength', 'beneficiaries_covered', 'display_order', 'is_active'],
             'defaults' => ['beneficiaries_covered' => 0, 'display_order' => 0, 'is_active' => 1],
             'order_by' => 'display_order ASC, id DESC',
         ],
@@ -345,6 +345,11 @@ final class NspController
                 'method' => 'POST',
                 'path' => '/api/logout',
                 'description' => 'Logout and invalidate the current Bearer token (requires Authorization header)',
+            ],
+            [
+                'method' => 'POST',
+                'path' => '/api/change-password',
+                'description' => 'Change the authenticated administrator password (requires Authorization header)',
             ],
             [
                 'method' => 'POST',
@@ -931,42 +936,6 @@ final class NspController
                     'success' => false,
                     'message' => 'programme_master_fk does not reference an existing programme.',
                 ];
-            }
-        }
-
-        if ($resource === 'programme_overview') {
-            if (array_key_exists('programme_master_fk', $payload)) {
-                $programmeMasterFk = filter_var($payload['programme_master_fk'], FILTER_VALIDATE_INT);
-                if ($programmeMasterFk === false || $programmeMasterFk <= 0) {
-                    return [
-                        'success' => false,
-                        'message' => 'programme_master_fk must be a positive integer.',
-                    ];
-                }
-
-                if (!$this->repository->existsById('programme_master', $programmeMasterFk)) {
-                    return [
-                        'success' => false,
-                        'message' => 'programme_master_fk does not reference an existing programme.',
-                    ];
-                }
-            }
-
-            if (array_key_exists('projects_fk', $payload)) {
-                $projectFk = filter_var($payload['projects_fk'], FILTER_VALIDATE_INT);
-                if ($projectFk === false || $projectFk <= 0) {
-                    return [
-                        'success' => false,
-                        'message' => 'projects_fk must be a positive integer.',
-                    ];
-                }
-
-                if (!$this->repository->existsById('projects', $projectFk)) {
-                    return [
-                        'success' => false,
-                        'message' => 'projects_fk does not reference an existing project.',
-                    ];
-                }
             }
         }
 

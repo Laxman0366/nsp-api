@@ -57,28 +57,14 @@ final class NspRepository
 
     public function allProgrammeOverview(string $orderBy = 'display_order ASC, id DESC'): array
     {
-        $sql = sprintf(
-            'SELECT po.*, pm.programme_name, p.project_name
-             FROM programme_overview po
-             LEFT JOIN programme_master pm ON pm.id = po.programme_master_fk
-             LEFT JOIN projects p ON p.id = po.projects_fk
-             ORDER BY %s',
-            $orderBy
-        );
+        $sql = sprintf('SELECT * FROM programme_overview ORDER BY %s', $orderBy);
 
         return $this->db->query($sql)->fetchAll();
     }
 
     public function findProgrammeOverview(int $id): ?array
     {
-        $stmt = $this->db->prepare(
-            'SELECT po.*, pm.programme_name, p.project_name
-             FROM programme_overview po
-             LEFT JOIN programme_master pm ON pm.id = po.programme_master_fk
-             LEFT JOIN projects p ON p.id = po.projects_fk
-             WHERE po.id = :id
-             LIMIT 1'
-        );
+        $stmt = $this->db->prepare('SELECT * FROM programme_overview WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
 
         $result = $stmt->fetch();
