@@ -227,7 +227,7 @@ final class NspController
             'table' => 'organization_details',
             'label' => 'Organization detail',
             'required' => ['phone_number', 'email', 'office_address'],
-            'allowed' => ['phone_number', 'email', 'office_address', 'office_address_hindi', 'office_address_odia', 'facebook_url', 'twitter_url', 'linkedin_url'],
+            'allowed' => ['phone_number', 'email', 'office_address', 'office_address_hindi', 'office_address_odia', 'facebook_url', 'instagram_url', 'youtube_url', 'twitter_url', 'linkedin_url'],
             'defaults' => [],
             'order_by' => 'id DESC',
         ],

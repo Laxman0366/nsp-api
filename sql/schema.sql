@@ -330,6 +330,8 @@ CREATE TABLE IF NOT EXISTS organization_details (
     office_address_hindi TEXT,
     office_address_odia TEXT,
     facebook_url VARCHAR(255) NULL,
+    instagram_url VARCHAR(255) NULL,
+    youtube_url VARCHAR(255) NULL,
     twitter_url VARCHAR(255) NULL,
     linkedin_url VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
